@@ -1,6 +1,8 @@
 from pathlib import Path
 from pypdf import PdfReader
 from document_intelligence.models.document import DocumentPage, Document
+from document_intelligence.exceptions import DocumentNotFoundError, DocumentReadError
+from pypdf.errors import PdfReadError
 
 
 def extract_document(file_path: str | Path) -> Document:
@@ -12,13 +14,24 @@ def extract_document(file_path: str | Path) -> Document:
     """
 
     file_path = Path(file_path)
-    reader = PdfReader(file_path)
 
-    pages = []
+    if not file_path.is_file():
+        raise DocumentNotFoundError(f"Document not found: {file_path}")
 
-    for page_number, page in enumerate(reader.pages, start=1):
-        text = page.extract_text() or ""
+    try:
+        reader = PdfReader(file_path)
 
-        pages.append(DocumentPage(page_number=page_number, text=text))
+        pages = []
 
-    return Document(file_name=file_path.name, pages=pages)
+        for page_number, page in enumerate(reader.pages, start=1):
+            text = page.extract_text() or ""
+
+            pages.append(DocumentPage(page_number=page_number, text=text))
+
+        return Document(file_name=file_path.name, pages=pages)
+    except PdfReadError as exc:
+        raise DocumentReadError(f"Unable to read the pdf: {file_path}") from exc
+    except PermissionError as exc:
+        raise DocumentReadError(
+            f"Permission denied while reading: {file_path}"
+        ) from exc

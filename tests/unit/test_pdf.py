@@ -1,5 +1,7 @@
 from pathlib import Path
 from document_intelligence.ingestion.pdf import extract_document
+import pytest
+from document_intelligence.exceptions import DocumentNotFoundError
 
 FIXTURES_DIR = Path("tests/fixtures/documents")
 
@@ -51,3 +53,10 @@ def test_extract_document_from_table_pdf():
     assert "Applied Mathematics" in text
     assert "40" in text
     assert "80%" in text
+
+
+def test_extract_document_raises_when_file_does_not_exist():
+    pdf_path = FIXTURES_DIR / "does_not_exist.pdf"
+
+    with pytest.raises(DocumentNotFoundError):
+        extract_document(pdf_path)
