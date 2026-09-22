@@ -44,3 +44,7 @@ A pdf document can be categorized into 2 groups,
 2.  **Scanned Documents** - Now the computer sees the document as images.
     To process those documents, we need OCR (Optical Character
     Recognition).
+
+![](media/image2.png)
+
+But for the initial phase, this project will only focus on text documents.
