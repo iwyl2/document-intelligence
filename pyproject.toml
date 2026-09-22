@@ -7,7 +7,9 @@ authors = [
     { name = "Poorna Rajapaksha", email = "poornarajapaksha339@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pypdf>=6.19.0",
+]
 
 [project.scripts]
 document-intelligence = "document_intelligence:main"
@@ -15,3 +17,8 @@ document-intelligence = "document_intelligence:main"
 [build-system]
 requires = ["uv_build>=0.12.6,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
