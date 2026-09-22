@@ -56,3 +56,12 @@ I have also implement a basic `CI` action in github to check weather all tests a
 > Now we should think what should happen after text extraction before chunking and storing
 
 ![](media/image3.png)
+
+We need to do this cleaning process just to remove and clean structural issues in a document. We should not do a hard cleaning process because that might destroy the useful context of the document.
+
+Therefore, the system have a simple cleaning process which includes,
+- Normalize line endings
+- Remove leading/trailing whitespace from the entire text
+- Remove leading/trailing whitespace from each line
+- Normalize repeated spaces/tabs within each line
+- Collapse 3+ consecutive newlines into 2
