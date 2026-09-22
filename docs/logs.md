@@ -48,3 +48,11 @@ A pdf document can be categorized into 2 groups,
 ![](media/image2.png)
 
 But for the initial phase, this project will only focus on text documents.
+
+Right now I have implement text based pdf text extractions. This also have proper exceptions without exposing low-level system exceptions. 
+
+I have also implement a basic `CI` action in github to check weather all tests are being passed during commits and pull requests.
+
+> Now we should think what should happen after text extraction before chunking and storing
+
+![](media/image3.png)
