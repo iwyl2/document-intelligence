@@ -65,3 +65,19 @@ Therefore, the system have a simple cleaning process which includes,
 - Remove leading/trailing whitespace from each line
 - Normalize repeated spaces/tabs within each line
 - Collapse 3+ consecutive newlines into 2
+
+# Phase 2 - Chunking
+
+> Chunking means breaking a large document into **smaller meaningful pieces of text**
+
+Let's say we have a document, and we ask a specific question based on that document. The system should not send the entire document for the LLM as **context**. This will be fine if the document is small but for larger document it's not practical.
+
+With chunking we brake large documents into meaningful groups. And when a question is asked, we retrieves only the required chunks and send them as the **context** for the LLM.
+
+There are few different `chunking-strategies`:
+
+![](media/image4.png)
+
+The **agentic** and **semantic chunking** offers **better results** compared to rest of the chunking strategies. But between **agentic** and **semantic**, **agentic** provides better results.
+
+But for this project we will use **semantic chunking** rather than **agentic chunking** in the V1. Because, with semantic chunking, I will get a better exposure on embeddings.
