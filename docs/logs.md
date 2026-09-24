@@ -81,3 +81,13 @@ There are few different `chunking-strategies`:
 The **agentic** and **semantic chunking** offers **better results** compared to rest of the chunking strategies. But between **agentic** and **semantic**, **agentic** provides better results.
 
 But for this project we will use **semantic chunking** rather than **agentic chunking** in the V1. Because, with semantic chunking, I will get a better exposure on embeddings.
+
+## Embeddings
+
+> Embedding is a means of representing objects like text, images and audio as points in a continuous vector space.
+
+Text can be converted to vectors using few different methods, 
+
+![](media/image5.png)
+
+Each of these methods converts text into vectors in different methods. But after we convert the sentences to vectors we should calculate and group the sentences based on the similarites. To calculate the similarities between sentences, we use `cosine similarity` method.
