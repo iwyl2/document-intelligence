@@ -31,3 +31,10 @@ def test_clean_text_preserves_paragraphs():
     result = clean_text(text)
 
     assert result == "Hello\n\nWorld"
+
+def test_clean_text_normalizes_multiple_spaces():
+    text = "Bachelor  of    Computing\tProgram"
+
+    result = clean_text(text)
+
+    assert result == "Bachelor of Computing Program"
