@@ -73,7 +73,7 @@ class SemanticChunker:
 
         return boundaries
 
-    def create_chunks(self,sentences:list[str], boundaries:list[int]) -> list[Chunk]:
+    def create_chunks(self,sentences:list[str], boundaries:list[int], file_name:str="", page_no:int=0) -> list[Chunk]:
         """
         Combine sentences into chunks using the detected boundaries.
         """
@@ -89,7 +89,9 @@ class SemanticChunker:
                 chunks.append(
                     Chunk(
                         text=" ".join(chunk_sentence),
-                        sentences=chunk_sentence
+                        sentences=chunk_sentence,
+                        file_name=file_name,
+                        page_no=page_no
                     )
                 )
 
@@ -100,26 +102,33 @@ class SemanticChunker:
         chunks.append(
             Chunk(
                 text=" ".join(remaining),
-                sentences=remaining
+                sentences=remaining,
+                file_name=file_name,
+                page_no=page_no
             )
         )
 
         return chunks
 
-    def chunk(self,text:list[str])-> list[Chunk]:
+    def chunk(self, text:str, file_name: str = "", page_no: int = 0)-> list[Chunk]:
         """
         Complete semantic chunking pipeline.
         """
 
         sentences = self.split_sentences(text)
 
-        if len(sentences) <= 1:
-            return(
+        if not sentences:
+            return []
+
+        if len(sentences) == 1:
+            return [
                 Chunk(
-                    text=text.strip(),
-                    sentences=sentences
+                    text=sentences[0],
+                    sentences=sentences,
+                    file_name=file_name,
+                    page_no=page_no
                 )
-            )
+            ]
 
         embeddings = self.model.encode(
             sentences,
@@ -132,5 +141,7 @@ class SemanticChunker:
 
         return self.create_chunks(
             sentences=sentences,
-            boundaries=boundaries
+            boundaries=boundaries,
+            file_name=file_name,
+            page_no=page_no
         )
