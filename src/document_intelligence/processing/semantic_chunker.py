@@ -4,11 +4,11 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 class SemanticChunker:
-    def __init__(self,model_name:str="all-MiniLM-L6-v2",percentile:float=0.80):
+    def __init__(self,model_name:str="all-MiniLM-L6-v2",percentile:float=80.0):
         self.model = SentenceTransformer(model_name)
         self.percentile = percentile
 
-    def split_sentences(self, text:str) -> list[str]:
+    def split_sentences(self, text: str) -> list[str]:
         """
         Basic sentence splitting for V1.
 
@@ -16,13 +16,15 @@ class SemanticChunker:
         a proper NLP sentence tokenizer later.
         """
 
+        text = " ".join(text.split())
+
         sentences = []
 
-        for sentence in text.replace("\n"," ").split("."):
+        for sentence in text.split("."):
             sentence = sentence.strip()
 
             if sentence:
-                sentences.append(sentence+".")
+                sentences.append(sentence + ".")
 
         return sentences
 
@@ -68,7 +70,7 @@ class SemanticChunker:
         boundaries = []
 
         for i,drop in enumerate(drops):
-            if drop < threshold:
+            if drop >= threshold:
                 boundaries.append(i+1)
 
         return boundaries
