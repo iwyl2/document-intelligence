@@ -35,4 +35,4 @@ def test_chunking():
         print(
             f"\n[{chunk.file_name} | Page {chunk.page_no}]"
         )
-        print(chunk.text)
+        print(repr(chunk.text))
