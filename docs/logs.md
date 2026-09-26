@@ -90,4 +90,10 @@ Text can be converted to vectors using few different methods,
 
 ![](media/image5.png)
 
-Each of these methods converts text into vectors in different methods. But after we convert the sentences to vectors we should calculate and group the sentences based on the similarites. To calculate the similarities between sentences, we use `cosine similarity` method.
+Each of these methods converts text into vectors in different methods. But after we convert the sentences to vectors we should calculate and group the sentences based on the similarities. To calculate the similarities between sentences, we use `cosine similarity` method.
+
+At the moment chunking works on page by page. Using `cosine similarity` method we collect relevant sentences together and create chunks from them. Since we are using page by page chunking, there will be some redundancy chunks. But at this phase they are ignored.
+
+![](media/image6.png)
+
+## Vector Database
