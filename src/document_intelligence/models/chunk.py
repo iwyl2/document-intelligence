@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import numpy as np
 
 @dataclass
 class Chunk:
@@ -10,4 +11,4 @@ class Chunk:
 @dataclass
 class EmbeddedChunk:
     chunk:Chunk
-    embeddings:list[float]
+    embeddings:np.ndarray
