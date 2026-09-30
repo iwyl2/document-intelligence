@@ -103,3 +103,46 @@ Before going into vector databases, we should be able to convert text to vectors
 First we need the model class to store vector data. But we should't combined it with `chunk` model. Because there could be chunks that might not need this conversion.
 
 ![](media/image7.png)
+
+### Vector Database
+
+A vector database is a database designed to store and search vector embeddings efficiently.
+
+A normal SQL database isn't designed to efficiently answer:
+
+> "Find the vectors that are most semantically similar to this vector."
+
+A vector database is.
+
+A normal database might do:
+
+```sql
+SELECT * FROM students
+WHERE attendance >= 80;
+```
+
+That's an exact/structured query.
+
+A vector database does something more like:
+
+```txt
+Query:
+"What attendance is required?"
+
+        ↓
+      vector
+
+        ↓
+
+Find vectors closest to this vector
+        ↓
+┌──────────────────────────────┐
+│ Chunk A       similarity .91 │
+│ Chunk B       similarity .82 │
+│ Chunk C       similarity .34 │
+└──────────────────────────────┘
+```
+
+It isn't necessarily looking for the same words.
+
+It's looking for similar meaning.
