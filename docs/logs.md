@@ -98,8 +98,8 @@ At the moment chunking works on page by page. Using `cosine similarity` method w
 
 ### Embedding Storage
 
-Before going into vector databases, we should be able to convert text to vectors. Then we should test weather a **chunk** shows higer similarity score to a related question.
+Before going into vector databases, we should be able to convert text to vectors. Then we should test weather a **chunk** shows higher similarity score to a related question.
 
-First we need the model class to store vector data. But we should't combined it with `chunk` model. Becuase there could be chunks that might not need this convertion.
+First we need the model class to store vector data. But we should't combined it with `chunk` model. Because there could be chunks that might not need this conversion.
 
 ![](media/image7.png)
