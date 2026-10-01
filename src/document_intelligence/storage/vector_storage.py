@@ -32,3 +32,10 @@ class VectorStorage:
         self.collection.add(
             ids=ids, documents=documents, embeddings=embeddings, metadatas=metadatas
         )
+
+    def search(self, query_embedding, top_k: int = 3):
+        results = self.collection.query(
+            query_embeddings=[query_embedding.tolist()], n_results=top_k
+        )
+
+        return results
