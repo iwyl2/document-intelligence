@@ -1,6 +1,7 @@
 from document_intelligence.ingestion.pdf import extract_document
 from document_intelligence.processing.document import clean_document
 from document_intelligence.processing.semantic_chunker import SemanticChunker
+from document_intelligence.processing.embedder import Embedder
 from pathlib import Path
 
 FIXTURES_DIR = Path("tests/fixtures/documents")
@@ -12,7 +13,9 @@ def test_chunking():
 
     cleaned_document = clean_document(document)
 
-    chunker = SemanticChunker()
+    embedder = Embedder()
+
+    chunker = SemanticChunker(embedder=embedder)
     chunks = []
 
     for page in cleaned_document.pages:

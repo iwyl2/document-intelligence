@@ -1,11 +1,11 @@
 from document_intelligence.models.chunk import Chunk
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
+from document_intelligence.processing.embedder import Embedder
 
 class SemanticChunker:
-    def __init__(self,model_name:str="all-MiniLM-L6-v2",percentile:float=80.0):
-        self.model = SentenceTransformer(model_name)
+    def __init__(self,embedder:Embedder,percentile:float=80.0):
+        self.embedder = embedder
         self.percentile = percentile
 
     def split_sentences(self, text: str) -> list[str]:
@@ -132,10 +132,7 @@ class SemanticChunker:
                 )
             ]
 
-        embeddings = self.model.encode(
-            sentences,
-            normalize_embeddings=True
-        )
+        embeddings = self.embedder.encode(sentences)
 
         similarities = self.calculate_similarity(embeddings)
 
