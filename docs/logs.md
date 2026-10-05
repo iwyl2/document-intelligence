@@ -125,24 +125,38 @@ That's an exact/structured query.
 
 A vector database does something more like:
 
-```txt
-Query:
-"What attendance is required?"
-
-        ↓
-      vector
-
-        ↓
-
-Find vectors closest to this vector
-        ↓
-┌──────────────────────────────┐
-│ Chunk A       similarity .91 │
-│ Chunk B       similarity .82 │
-│ Chunk C       similarity .34 │
-└──────────────────────────────┘
-```
+![](media/image8.png)
 
 It isn't necessarily looking for the same words.
 
 It's looking for similar meaning.
+
+## Retrieving Engine
+
+Now we implement the system to convert user input into a vector and search and retrieve the similar chunks from the vector database.
+
+Now we have to test our retrieval system. For that we can use few metrics,
+1. Recall@k
+2. MRR
+
+### Recall@k
+
+> `k` can mean a any numeric value. But what we looking from this test is, **did the correct chunk appear within the $k^{th}$ chunk**.
+
+For example if we are looking for `Recall@1`, we are checking weather the correct chunk come back as the #1 result.
+
+For our current version we got below results,
+
+- Recall@1: 60.00%
+- Recall@3: 100.00%
+- Recall@5: 100.00%
+
+This means our retrieval engine is good for a some extend but there is more room to improve.
+
+### MRR
+
+> MRR - Mean Reciprocal Rank
+>
+> This means "On average, how high was the first correct result".
+
+The current stage of `MRR` value of **0.767** shows that **relevant results generally rank fairly high**.
