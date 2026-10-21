@@ -36,60 +36,76 @@ Specialized in analyzing repository progress, comparing existing code/tests agai
 ## 3. Technology Stack & Project Layout
 
 ### Root Directory Structure
-The repository is managed via `uv` with Python 3.13:
+The repository is organized with independent backend and frontend directories:
 
 ```text
 document-intelligence/
+├── AGENTS.md                        # Master Agent Guidelines & Architecture
+├── .agents/
+│   └── skills/
+│       ├── doc-intel-auditor/
+│       │   └── SKILL.md             # Senior Code Auditor Runbook
+│       └── next-step-advisor/
+│           └── SKILL.md             # Next-Step Strategist Runbook
+├── .github/
+│   └── workflows/
+│       └── ci.yml                   # CI testing workflow (runs in backend/)
 ├── docs/
 │   ├── scope.md                     # Authoritative system scope & architecture
 │   ├── logs.md                      # Developer learning log and notes
 │   └── media/                       # Architectural diagrams and illustrations
-├── src/
-│   └── document_intelligence/       # Core Python package
-│       ├── __init__.py
-│       ├── exceptions.py            # Domain exceptions (DocumentNotFoundError, etc.)
-│       ├── models/                  # Domain Data Transfer Objects (dataclasses)
-│       │   ├── document.py          # Document, DocumentPage
-│       │   ├── chunk.py             # Chunk, EmbeddedChunk
-│       │   ├── retriever.py         # RetrievedChunk
-│       │   └── generation.py        # GenerationResponse
-│       ├── ingestion/               # Layer 1: Document ingestion
-│       │   └── pdf.py               # pypdf text extraction
-│       ├── processing/              # Layer 2: Cleaning, embeddings & chunking
-│       │   ├── text.py              # clean_text (Unicode NFKC, whitespace normalization)
-│       │   ├── document.py          # clean_document (page-by-page cleaning)
-│       │   ├── embedder.py          # SentenceTransformer (all-MiniLM-L6-v2)
-│       │   └── semantic_chunker.py  # Cosine drop semantic chunker
-│       ├── storage/                 # Layer 3: Vector storage
-│       │   └── vector_storage.py    # ChromaDB collection management & indexing
-│       ├── retrieval/               # Layer 4: Semantic search & ranking
-│       │   └── retriever.py         # Retriever (query encoding -> vector search)
-│       └── generation/              # Layer 5: Grounded generation & citations
-│           └── generator.py         # XML context formatting & grounded prompt
-├── tests/                           # Automated Verification & Evaluation Suite
-│   ├── fixtures/
-│   │   └── documents/               # Real PDF test documents
-│   │       ├── bachelor_of_computing_program.pdf
-│   │       ├── academic_table.pdf
-│   │       ├── multipage_academic.pdf
-│   │       └── simple_text.pdf
-│   ├── unit/                        # Unit tests per layer
-│   │   ├── test_pdf.py
-│   │   ├── test_text.py
-│   │   ├── test_document_processing.py
-│   │   ├── test_embedder.py
-│   │   ├── test_chunker.py
-│   │   ├── test_vector_storage.py
-│   │   └── test_retriever.py
-│   ├── integration/                 # End-to-end pipeline tests
-│   │   ├── test_document_pipeline.py
-│   │   └── test_retrieval_pipeline.py
-│   └── evaluation/                  # Information Retrieval metrics evaluation
-│       ├── test_retrieval_evaluation.py
-│       └── test_retrieval_metrics.py# Recall@1, Recall@3, Recall@5, MRR
-├── pyproject.toml                   # uv project manifest (dependencies: chromadb, pypdf, sentence-transformers)
-├── uv.lock                          # Deterministic lockfile
-└── AGENTS.md                        # This instruction file
+├── backend/                         # Backend Python Engine (managed exclusively via uv)
+│   ├── pyproject.toml               # uv manifest (chromadb, pypdf, sentence-transformers, openai)
+│   ├── uv.lock                      # Deterministic lockfile
+│   ├── .python-version              # Python 3.13 pinning
+│   ├── .env                         # Local environment secrets (API keys)
+│   ├── src/
+│   │   └── document_intelligence/   # Core Python package
+│   │       ├── __init__.py          # Package entrypoint / pipeline runner
+│   │       ├── exceptions.py        # Domain exceptions (DocumentNotFoundError, etc.)
+│   │       ├── models/              # Domain Data Transfer Objects (dataclasses)
+│   │       │   ├── document.py      # Document, DocumentPage
+│   │       │   ├── chunk.py         # Chunk, EmbeddedChunk
+│   │       │   ├── retriever.py     # RetrievedChunk
+│   │       │   └── generation.py    # GenerationResponse
+│   │       ├── ingestion/           # Layer 1: Document ingestion (pypdf)
+│   │       │   └── pdf.py
+│   │       ├── processing/          # Layer 2: Cleaning, embeddings & chunking
+│   │       │   ├── text.py          # clean_text (Unicode NFKC, whitespace normalization)
+│   │       │   ├── document.py      # clean_document (page-by-page cleaning)
+│   │       │   ├── embedder.py      # SentenceTransformer (all-MiniLM-L6-v2)
+│   │       │   └── semantic_chunker.py # Cosine drop semantic chunker
+│   │       ├── storage/             # Layer 3: Vector storage
+│   │       │   └── vector_storage.py# ChromaDB collection management & indexing
+│   │       ├── retrieval/           # Layer 4: Semantic search & ranking
+│   │       │   └── retriever.py     # Retriever (query encoding -> vector search)
+│   │       └── generation/          # Layer 5: Grounded generation & citations
+│   │           ├── generator.py     # XML context formatting & grounded prompt
+│   │           └── adapters.py      # LLM Client Adapters (OpenRouter / OpenAI)
+│   └── tests/                       # Automated Verification & Evaluation Suite
+│       ├── fixtures/
+│       │   └── documents/           # Real PDF test documents
+│       │       ├── bachelor_of_computing_program.pdf
+│       │       ├── academic_table.pdf
+│       │       ├── multipage_academic.pdf
+│       │       └── simple_text.pdf
+│       ├── unit/                    # Unit tests per layer
+│       │   ├── test_pdf.py
+│       │   ├── test_text.py
+│       │   ├── test_document_processing.py
+│       │   ├── test_embedder.py
+│       │   ├── test_chunker.py
+│       │   ├── test_vector_storage.py
+│       │   ├── test_retriever.py
+│       │   └── test_generator.py
+│       ├── integration/             # End-to-end pipeline tests
+│       │   ├── test_document_pipeline.py
+│       │   └── test_retrieval_pipeline.py
+│       └── evaluation/              # Information Retrieval metrics evaluation
+│           ├── test_retrieval_evaluation.py
+│           └── test_retrieval_metrics.py # Recall@1, Recall@3, Recall@5, MRR
+├── frontend/                        # Web UI Application (Next.js / React)
+└── .gitignore                       # Repository-wide gitignore
 ```
 
 ---
@@ -128,7 +144,7 @@ To keep the project focused, practical, and true to the V1 learning objective ou
 Whenever reviewing or writing code, evaluate across these four pillars:
 
 ### Pillar 1: Integrity & Type Correctness
-- Models must strictly use the dataclasses in `src/document_intelligence/models/`.
+- Models must strictly use the dataclasses in `backend/src/document_intelligence/models/`.
 - Domain exceptions (`DocumentNotFoundError`, `DocumentReadError`) must be used at library boundaries.
 - 1-based indexing for document page numbers must be maintained across all models and citations.
 - Clean type annotations throughout.
