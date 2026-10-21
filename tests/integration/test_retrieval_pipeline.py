@@ -59,17 +59,16 @@ def test_document_retrieval():
         vector_storage=storage,
     )
 
-    results = retriever.retrieve(
+    retrieved_chunks = retriever.retrieve_chunks(
         query="What is the Bachelor of Computing program?",
         top_k=3,
     )
 
-    assert results["documents"]
-    assert len(results["documents"][0]) > 0
+    assert len(retrieved_chunks) > 0
+    assert retrieved_chunks[0].file_name == cleaned_document.file_name
+    assert retrieved_chunks[0].page_number > 0
 
-    retrieved_documents = results["documents"][0]
-
-    combined_text = " ".join(retrieved_documents).lower()
+    combined_text = " ".join(chunk.text for chunk in retrieved_chunks).lower()
 
     assert "bachelor" in combined_text
     assert "computing" in combined_text

@@ -114,17 +114,14 @@ def test_retrieval_evaluation():
         question = case["question"]
         expected_terms = case["expected_terms"]
 
-        results = retriever.retrieve(
+        chunks = retriever.retrieve_chunks(
             query=question,
             top_k=3,
         )
 
-        assert results["documents"]
-        assert results["documents"][0]
+        assert len(chunks) > 0
 
-        retrieved_documents = results["documents"][0]
-
-        retrieved_text = " ".join(retrieved_documents).lower()
+        retrieved_text = " ".join(chunk.text for chunk in chunks).lower()
 
         matched_terms = [
             term for term in expected_terms if term.lower() in retrieved_text
@@ -145,25 +142,13 @@ def test_retrieval_evaluation():
 
         print(f"Matched: {matched_terms}")
 
-        print(f"Missing: " f"{[
-                term
-                for term in expected_terms
-                if term.lower() not in retrieved_text
-            ]}")
+        print(f"Missing: {[term for term in expected_terms if term.lower() not in retrieved_text]}")
 
-        for index, document in enumerate(
-            retrieved_documents,
-            start=1,
-        ):
-            metadata = results["metadatas"][0][index - 1]
-            distance = results["distances"][0][index - 1]
-
+        for index, chunk in enumerate(chunks, start=1):
             print(f"\n--- RESULT {index} ---")
-            print(
-                f"File: {metadata['file_name']} | " f"Page: {metadata['page_number']}"
-            )
-            print(f"Distance: {distance}")
-            print(document)
+            print(f"File: {chunk.file_name} | Page: {chunk.page_number}")
+            print(f"Distance: {chunk.distance}")
+            print(chunk.text)
 
         if match_ratio >= 0.80:
             successful_cases += 1

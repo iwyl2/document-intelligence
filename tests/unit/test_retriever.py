@@ -50,11 +50,12 @@ def test_retriever_returns_relevant_chunk():
         vector_storage=storage,
     )
 
-    results = retriever.retrieve(
+    results = retriever.retrieve_chunks(
         "What is the Mathematics pass mark?",
         top_k=1,
     )
 
-    assert len(results["documents"][0]) == 1
-
-    assert results["documents"][0][0] == "The pass mark for Mathematics is 40."
+    assert len(results) == 1
+    assert results[0].text == "The pass mark for Mathematics is 40."
+    assert results[0].file_name == "academic.pdf"
+    assert results[0].page_number == 2

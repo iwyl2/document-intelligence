@@ -143,12 +143,12 @@ def test_retrieval_metrics():
         question = case["question"]
         relevant_terms = case["relevant_terms"]
 
-        results = retriever.retrieve(
+        chunks = retriever.retrieve_chunks(
             query=question,
             top_k=5,
         )
 
-        retrieved_documents = results["documents"][0]
+        retrieved_documents = [chunk.text for chunk in chunks]
 
         recall_1 = recall_at_k(
             retrieved_documents,
