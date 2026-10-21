@@ -1,1 +1,19 @@
-__pycache__
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+
+# Environment Variables & Secrets
+.env
+*.env
+
+# Testing & Cache
+.pytest_cache/
+
+# Local Vector Storage & DBs
+data/
+*.db
+*.db-shm
+*.db-wal
