@@ -11,6 +11,12 @@ export interface QueryResponse {
   is_grounded: boolean;
 }
 
+export interface IndexStatusResponse {
+  total_chunks: number;
+  indexed_files: string[];
+  is_empty: boolean;
+}
+
 export interface ApiError {
   detail: string;
   error_type?: string;
@@ -25,6 +31,32 @@ export async function checkBackendHealth(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function getIndexStatus(): Promise<IndexStatusResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/documents/status`, {
+    method: "GET",
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ detail: "Failed to get index status" }));
+    throw new Error(errorData.detail || `Status check failed with code ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function clearDocuments(): Promise<{ message: string; total_chunks: number }> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/documents`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ detail: "Failed to clear documents" }));
+    throw new Error(errorData.detail || `Clear failed with code ${res.status}`);
+  }
+
+  return res.json();
 }
 
 export async function uploadDocument(file: File): Promise<UploadResponse> {

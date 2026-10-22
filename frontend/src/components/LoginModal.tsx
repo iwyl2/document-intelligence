@@ -64,13 +64,6 @@ export function LoginModal({ isOpen, onClose, redirectTo = "/workspace" }: Login
           </div>
         </div>
 
-        {/* Notice */}
-        <div className="p-3 mb-5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl text-xs text-zinc-400 leading-relaxed">
-          <span className="text-zinc-300 font-medium">In-Memory Engine:</span> V1 runs an isolated ChromaDB vector index and local embeddings. Enter the access key to unlock the workbench.
-          <div className="mt-1 text-emerald-400/90 font-mono text-[11px]">
-            Demo Key: <span className="underline select-all">doc-intel-2026</span>
-          </div>
-        </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">

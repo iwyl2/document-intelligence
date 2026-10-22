@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   UploadCloud,
   FileText,
@@ -13,10 +13,19 @@ import {
   RotateCcw,
   SlidersHorizontal,
   Bookmark,
+  Trash2,
+  Database,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { LoginModal } from "@/components/LoginModal";
-import { uploadDocument, queryDocument, UploadResponse } from "@/lib/api";
+import {
+  uploadDocument,
+  queryDocument,
+  getIndexStatus,
+  clearDocuments,
+  UploadResponse,
+  IndexStatusResponse,
+} from "@/lib/api";
 
 interface ChatMessage {
   id: string;
@@ -31,9 +40,11 @@ export default function WorkspacePage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // Ingestion state
+  // Ingestion & In-Memory Status
   const [uploadedDoc, setUploadedDoc] = useState<UploadResponse | null>(null);
+  const [indexStatus, setIndexStatus] = useState<IndexStatusResponse | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +54,32 @@ export default function WorkspacePage() {
   const [topK, setTopK] = useState(3);
   const [isQuerying, setIsQuerying] = useState(false);
   const [queryError, setQueryError] = useState<string | null>(null);
+
+  // Fetch status of in-memory store
+  const refreshStatus = async () => {
+    try {
+      const status = await getIndexStatus();
+      setIndexStatus(status);
+
+      // If document is already loaded in memory but not in React state (e.g. after page refresh)
+      if (!status.is_empty && status.indexed_files.length > 0) {
+        setUploadedDoc({
+          file_name: status.indexed_files.join(", "),
+          num_pages: 0,
+          num_chunks: status.total_chunks,
+          message: "Loaded from active in-memory session",
+        });
+      }
+    } catch {
+      // Backend might be offline
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshStatus();
+    }
+  }, [isAuthenticated]);
 
   // Sample prompt suggestions
   const suggestedQueries = [
@@ -64,10 +101,12 @@ export default function WorkspacePage() {
     try {
       const res = await uploadDocument(file);
       setUploadedDoc(res);
+      await refreshStatus();
+
       // Add a system welcome message
       setMessages([
         {
-          id: "welcome",
+          id: `sys-${Date.now()}`,
           role: "assistant",
           content: `Document "${res.file_name}" successfully indexed into in-memory ChromaDB (${res.num_pages} pages, ${res.num_chunks} semantic chunks). You can now ask questions with verifiable page citations!`,
           isGrounded: true,
@@ -90,12 +129,29 @@ export default function WorkspacePage() {
     }
   };
 
+  // Clear In-Memory Store Handler
+  const handleClearMemory = async () => {
+    if (isClearing) return;
+    setIsClearing(true);
+    try {
+      await clearDocuments();
+      setUploadedDoc(null);
+      setMessages([]);
+      await refreshStatus();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to clear in-memory store";
+      setUploadError(msg);
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   // Query Handler
   const handleSendQuery = async (queryText?: string) => {
     const question = (queryText || inputQuery).trim();
     if (!question || isQuerying) return;
 
-    if (!uploadedDoc) {
+    if (!uploadedDoc && (!indexStatus || indexStatus.is_empty)) {
       setQueryError("Please upload a PDF document before asking questions.");
       return;
     }
@@ -194,6 +250,8 @@ export default function WorkspacePage() {
     );
   }
 
+  const hasLoadedData = (indexStatus && !indexStatus.is_empty) || !!uploadedDoc;
+
   return (
     <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[calc(100vh-4rem)]">
       {/* LEFT COLUMN: Document Management (4 cols) */}
@@ -205,9 +263,18 @@ export default function WorkspacePage() {
               <FileText className="w-4 h-4 text-emerald-400" />
               Document Ingestion
             </h2>
-            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">
-              In-Memory
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  indexStatus?.is_empty === false ? "bg-emerald-500" : "bg-zinc-600"
+                }`}
+              />
+              <span className="text-[10px] font-mono text-zinc-400">
+                {indexStatus?.is_empty === false
+                  ? `${indexStatus.total_chunks} Chunks in RAM`
+                  : "RAM Empty"}
+              </span>
+            </div>
           </div>
 
           {/* Drag & Drop Area */}
@@ -257,39 +324,59 @@ export default function WorkspacePage() {
             </div>
           )}
 
-          {/* Uploaded Document Summary */}
-          {uploadedDoc && (
+          {/* Uploaded Document / In-Memory Summary */}
+          {hasLoadedData && (
             <div className="mt-4 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
               <div className="flex items-start justify-between">
                 <div className="min-w-0 pr-2">
                   <span className="text-[10px] uppercase font-mono text-emerald-400 font-semibold block">
-                    Active Document
+                    Active In-Memory Index
                   </span>
-                  <p className="text-xs font-medium text-zinc-200 truncate mt-0.5" title={uploadedDoc.file_name}>
-                    {uploadedDoc.file_name}
+                  <p
+                    className="text-xs font-medium text-zinc-200 truncate mt-0.5"
+                    title={uploadedDoc?.file_name || indexStatus?.indexed_files.join(", ")}
+                  >
+                    {uploadedDoc?.file_name || indexStatus?.indexed_files.join(", ")}
                   </p>
                 </div>
                 <button
-                  onClick={() => {
-                    setUploadedDoc(null);
-                    setMessages([]);
-                  }}
-                  className="p-1 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded transition-colors"
-                  title="Clear document"
+                  onClick={handleClearMemory}
+                  disabled={isClearing}
+                  className="p-1.5 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 rounded-lg transition-colors"
+                  title="Purge in-memory vector store"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  {isClearing ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-3.5 h-3.5" />
+                  )}
                 </button>
               </div>
 
               <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-emerald-500/10 text-xs font-mono">
                 <div>
-                  <span className="text-zinc-500 block text-[10px]">Pages</span>
-                  <span className="text-zinc-200 font-semibold">{uploadedDoc.num_pages}</span>
+                  <span className="text-zinc-500 block text-[10px]">Indexed Files</span>
+                  <span className="text-zinc-200 font-semibold">
+                    {indexStatus?.indexed_files.length || 1}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-zinc-500 block text-[10px]">Semantic Chunks</span>
-                  <span className="text-emerald-400 font-semibold">{uploadedDoc.num_chunks}</span>
+                  <span className="text-zinc-500 block text-[10px]">Total Chunks</span>
+                  <span className="text-emerald-400 font-semibold">
+                    {indexStatus?.total_chunks || uploadedDoc?.num_chunks}
+                  </span>
                 </div>
+              </div>
+
+              <div className="mt-3 pt-2 flex items-center justify-between">
+                <button
+                  onClick={handleClearMemory}
+                  disabled={isClearing}
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-mono text-zinc-400 hover:text-rose-400 bg-zinc-900 hover:bg-rose-500/10 border border-zinc-800 hover:border-rose-500/30 rounded-lg transition-all"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Purge In-Memory Store</span>
+                </button>
               </div>
             </div>
           )}
@@ -333,16 +420,16 @@ export default function WorkspacePage() {
                 <Sparkles className="w-6 h-6" />
               </div>
               <h3 className="text-base font-semibold text-zinc-200">
-                {uploadedDoc ? "Document Ready for Queries" : "Upload a PDF to Begin"}
+                {hasLoadedData ? "Document Ready for Queries" : "Upload a PDF to Begin"}
               </h3>
               <p className="text-xs text-zinc-400 max-w-sm mt-1 leading-relaxed">
-                {uploadedDoc
+                {hasLoadedData
                   ? "Ask any question about the document. The engine will retrieve context and cite exact page numbers."
                   : "Drag and drop a PDF on the left panel to trigger text extraction, semantic chunking, and ChromaDB vector indexing."}
               </p>
 
               {/* Suggestions */}
-              {uploadedDoc && (
+              {hasLoadedData && (
                 <div className="mt-6 flex flex-col gap-2 w-full max-w-md">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 text-left">
                     Suggested Questions
@@ -445,16 +532,16 @@ export default function WorkspacePage() {
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
               placeholder={
-                uploadedDoc
+                hasLoadedData
                   ? "Ask a question about the document..."
                   : "Upload a document to enable queries..."
               }
-              disabled={!uploadedDoc || isQuerying}
+              disabled={!hasLoadedData || isQuerying}
               className="flex-1 py-2.5 px-4 bg-zinc-900 border border-zinc-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl text-xs sm:text-sm text-zinc-100 placeholder-zinc-500 outline-none disabled:opacity-50 transition-all"
             />
             <button
               type="submit"
-              disabled={!uploadedDoc || !inputQuery.trim() || isQuerying}
+              disabled={!hasLoadedData || !inputQuery.trim() || isQuerying}
               className="p-2.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-zinc-950 font-semibold rounded-xl shadow-sm transition-all"
               aria-label="Send question"
             >
