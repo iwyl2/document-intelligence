@@ -39,3 +39,24 @@ class VectorStorage:
         )
 
         return results
+
+    def count(self) -> int:
+        """Return total number of chunks indexed in the collection."""
+        return self.collection.count()
+
+    def get_indexed_files(self) -> list[str]:
+        """Return distinct file names currently present in the collection."""
+        data = self.collection.get(include=["metadatas"])
+
+        if not data or not data["metadatas"]:
+            return []
+
+        files = {m["file_name"] for m in data["metadatas"] if m and "file_name" in m}
+        return sorted(list(files))
+
+    def clear(self) -> None:
+        """Completely purge the collection and recreate a fresh empty one."""
+        self.client.delete_collection(name=self.collection.name)
+        self.collection = self.client.get_or_create_collection(
+            name=self.collection.name
+        )

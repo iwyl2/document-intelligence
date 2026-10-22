@@ -80,3 +80,13 @@ def query_document(
         cited_pages=response.cited_pages,
         is_grounded=response.is_grounded,
     )
+
+
+@router.get("/documents/status", summary="Check in-memory vector store status")
+def get_documents_status(service: RagService = Depends(get_rag_service)):
+    return service.get_status()
+
+
+@router.delete("/documents", summary="Clear all in-memory indexed documents")
+def clear_documents(service: RagService = Depends(get_rag_service)):
+    return service.clear_index()

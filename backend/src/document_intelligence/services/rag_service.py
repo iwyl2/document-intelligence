@@ -107,3 +107,21 @@ class RagService:
         """
         retrieved_chunks = self.retriever.retrieve_chunks(query=question, top_k=top_k)
         return self.generator.generate(query=question, chunks=retrieved_chunks)
+
+    def get_status(self) -> dict:
+        """Inspect the current in-memory vector storage status."""
+        total_chunks = self.storage.count()
+        files = self.storage.get_indexed_files()
+        return {
+            "total_chunks": total_chunks,
+            "indexed_files": files,
+            "is_empty": total_chunks == 0,
+        }
+
+    def clear_index(self) -> dict:
+        """Clear all indexed documents and chunks from memory."""
+        self.storage.clear()
+        return {
+            "message": "In-memory vector store successfully cleared.",
+            "total_chunks": 0,
+        }
