@@ -84,8 +84,9 @@ export default function HomePage() {
 
         {/* Subhead */}
         <p className="mt-6 text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-          An engineering-first RAG pipeline built from scratch. Local dense vector
-          embeddings, semantic boundary chunking, and strict page-level citation grounding.
+          An engineering-first RAG pipeline built from scratch. Local dense
+          vector embeddings, semantic boundary chunking, and strict page-level
+          citation grounding.
         </p>
 
         {/* Action CTAs */}
@@ -110,7 +111,7 @@ export default function HomePage() {
           )}
 
           <a
-            href="https://github.com"
+            href="https://github.com/iwyl2/document-intelligence"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-zinc-800 hover:border-zinc-700 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 text-sm font-medium transition-all"
@@ -212,11 +213,16 @@ export default function HomePage() {
               Evaluation Recall
             </span>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-3xl font-bold font-mono text-zinc-100">100%</span>
-              <span className="text-xs font-mono text-emerald-400">Recall@5</span>
+              <span className="text-3xl font-bold font-mono text-zinc-100">
+                100%
+              </span>
+              <span className="text-xs font-mono text-emerald-400">
+                Recall@5
+              </span>
             </div>
             <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
-              Guarantees the target context chunk resides in the top-5 retrieved candidates.
+              Guarantees the target context chunk resides in the top-5 retrieved
+              candidates.
             </p>
           </div>
 
@@ -225,11 +231,16 @@ export default function HomePage() {
               Ranking Quality
             </span>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-3xl font-bold font-mono text-zinc-100">0.83</span>
-              <span className="text-xs font-mono text-emerald-400">MRR Score</span>
+              <span className="text-3xl font-bold font-mono text-zinc-100">
+                0.83
+              </span>
+              <span className="text-xs font-mono text-emerald-400">
+                MRR Score
+              </span>
             </div>
             <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
-              Mean Reciprocal Rank verifying relevant context appears primarily at Rank #1.
+              Mean Reciprocal Rank verifying relevant context appears primarily
+              at Rank #1.
             </p>
           </div>
 
@@ -238,8 +249,12 @@ export default function HomePage() {
               Vector Pipeline
             </span>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-3xl font-bold font-mono text-zinc-100">384</span>
-              <span className="text-xs font-mono text-emerald-400">Dimensions</span>
+              <span className="text-3xl font-bold font-mono text-zinc-100">
+                384
+              </span>
+              <span className="text-xs font-mono text-emerald-400">
+                Dimensions
+              </span>
             </div>
             <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
               all-MiniLM-L6-v2 running on local CPU with zero external API fees.
@@ -250,7 +265,8 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="mt-auto border-t border-zinc-900 py-6 text-center text-xs text-zinc-500 font-mono">
-        Document Intelligence Engine • Built with FastAPI, Sentence-Transformers, ChromaDB & Next.js
+        Document Intelligence Engine • Built with FastAPI,
+        Sentence-Transformers, ChromaDB & Next.js
       </footer>
 
       {/* Login Gatekeeper Modal */}
