@@ -1,6 +1,6 @@
 ---
 name: doc-intel-auditor
-description: Audit Document Intelligence codebase against docs/scope.md and AGENTS.md for correctness, NumPy vector efficiency, edge-case safety, and strict scope conformance without scope creep.
+description: Audit Document Intelligence codebase against docs/scope.md, docs/v2_scope.md, and AGENTS.md for correctness, NumPy vector efficiency, edge-case safety, and strict scope conformance without scope creep.
 ---
 
 # Document Intelligence Code Auditor
@@ -12,21 +12,14 @@ This skill provides the operational audit runbook for the **Document Intelligenc
 ## Step-by-Step Audit Workflow
 
 ### 1. Verify In-Scope Conformance
-- Read [`docs/scope.md`](file:///d:/Projects/document-intelligence/docs/scope.md) and [`AGENTS.md`](file:///d:/Projects/document-intelligence/AGENTS.md).
-- Ensure the code being audited strictly belongs to the V1 in-scope components:
-  - Text-based PDF extraction (`pypdf`)
-  - Text normalization (`clean_text` NFKC, whitespace, lines)
-  - Dense embeddings (`all-MiniLM-L6-v2`)
-  - Semantic chunking (cosine similarity drop detection, 80th percentile)
-  - ChromaDB vector storage (`PersistentClient` / in-memory `Client`)
-  - Vector similarity retrieval (`Retriever`)
-  - Information Retrieval evaluation (`Recall@k`, `MRR`)
-  - Grounded generator & citations (`[Page X]`)
+- Read [`docs/scope.md`](file:///d:/Projects/document-intelligence/docs/scope.md), [`docs/v2_scope.md`](file:///d:/Projects/document-intelligence/docs/v2_scope.md), and [`AGENTS.md`](file:///d:/Projects/document-intelligence/AGENTS.md).
+- Ensure the code being audited strictly belongs to the in-scope components for the active branch:
+  - **V1 Foundation**: Text-based PDF extraction (`pypdf`), text normalization (`clean_text` NFKC), semantic chunking (cosine similarity drop detection, 80th percentile), ChromaDB vector storage, vector similarity retrieval (`Retriever`), IR evaluation (`Recall@k`, `MRR`), and grounded generator with citations (`[Page X]`).
+  - **V2 Additions (`v2-dev`)**: Pluggable `BaseEmbedder` protocol (`LocalEmbedder` & `CloudEmbedder`), session-isolated vector storage (`session_id`), multi-document attribution (`[file_name • Page X]`), and RAG Triad evaluations (Faithfulness, Answer Relevance).
 - **Flag any out-of-scope creep immediately**:
-  - OCR / image-based PDF parsing
-  - External paid embedding APIs
-  - Distributed message queues / Docker / microservices
-  - Heavy agentic frameworks (LangChain / CrewAI)
+  - OCR for scanned handwriting / images
+  - Distributed message queues / Celery / Kafka
+  - Heavy agentic frameworks (LangChain / CrewAI / AutoGen)
 
 ### 2. Verify Integrity & Type Correctness
 - **Data Models**: Ensure usage of domain dataclasses in `src/document_intelligence/models/`:

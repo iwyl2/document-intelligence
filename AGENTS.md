@@ -4,11 +4,12 @@ This file governs agent behavior, code auditing, and architectural standards for
 
 ---
 
-## 1. Primary Reference Document
-All implementation, code reviews, and roadmap recommendations **must strictly align with**:
-- **Design Specification:** [`docs/scope.md`](file:///d:/Projects/document-intelligence/docs/scope.md)
+## 1. Primary Reference Documents
+All implementation, code reviews, and roadmap recommendations must strictly align with:
+- **Baseline V1 Specification:** [`docs/scope.md`](file:///d:/Projects/document-intelligence/docs/scope.md) (Local Engine Baseline)
+- **Active V2 Specification (`v2-dev`):** [`docs/v2_scope.md`](file:///d:/Projects/document-intelligence/docs/v2_scope.md) (Cloud-Ready, Multi-Tenant Engine)
 
-Any proposed feature, dependency, or structural pattern must be verified against this specification before implementation.
+Any proposed feature, dependency, or structural pattern must be verified against these specifications before implementation.
 
 ---
 
@@ -112,30 +113,27 @@ document-intelligence/
 
 ## 4. Scope Governance (Strict Scope Boundaries)
 
-To keep the project focused, practical, and true to the V1 learning objective outlined in [`docs/scope.md`](file:///d:/Projects/document-intelligence/docs/scope.md):
-
-### ✅ Strictly IN SCOPE:
+### ✅ V1 Scope (Baseline - Completed):
 1. **Text-based PDF Ingestion**: Extracting text and page numbers from text-based PDFs via `pypdf`.
 2. **Text Cleaning & Normalization**: NFKC Unicode normalization, whitespace trimming, multi-space collapse, and paragraph preservation.
 3. **Dense Vector Embeddings**: Local CPU embeddings using `sentence-transformers` (`all-MiniLM-L6-v2`, 384 dimensions).
-4. **Semantic Chunking via Cosine Distance**:
-   - Sentence splitting.
-   - Cosine similarity between adjacent sentence vectors.
-   - Detecting similarity drops ($\text{Sim}_i - \text{Sim}_{i+1}$) against an 80th percentile threshold.
-   - Assembling cohesive `Chunk` objects with `file_name` and `page_no`.
-5. **ChromaDB Vector Indexing**:
-   - Deterministic ID format: `{file_name}-page-{page_no}-chunk-{index}`.
-   - Storing chunk text, embeddings, and metadata (`file_name`, `page_number`).
-6. **Retriever Engine**: Query encoding and top-$k$ nearest chunk search.
+4. **Semantic Chunking via Cosine Distance**: Sentence splitting, cosine similarity drops (80th percentile threshold), and chunk creation.
+5. **ChromaDB Vector Indexing**: Deterministic IDs (`{file_name}-page-{page_no}-chunk-{index}`) and metadata.
+6. **Retriever Engine**: Dense query encoding and top-$k$ nearest chunk search.
 7. **Quantitative Evaluation**: `Recall@1`, `Recall@3`, `Recall@5`, and `MRR` (Mean Reciprocal Rank).
-8. **Grounded Generator**: XML context block formatting, inline citation rules (`[Page X]`), and hallucination fallback.
+8. **Grounded Generator**: XML context block formatting, inline citation rules (`[Page X]`), and deterministic fallback.
+
+### 🚀 V2 Scope Additions (`v2-dev` - Active):
+1. **Pluggable Embedding Architecture**: Abstract `BaseEmbedder` protocol supporting both `LocalEmbedder` and `CloudEmbedder` (Hugging Face Inference API / OpenAI) to allow low-memory (<80MB RAM) cloud hosting.
+2. **Multi-Tenancy & Session Isolation**: Parameterize vector storage by `session_id` so concurrent users do not share or overwrite vector data.
+3. **Multi-Document Corpus Attributions**: Query across multiple indexed PDFs with upgraded citations (`[file_name • Page X]`).
+4. **Automated RAG Triad Evaluations**: Faithfulness, Answer Relevance, and Context Precision in `tests/evaluation/`.
 
 ### ❌ Strictly OUT OF SCOPE (Do NOT Implement or Suggest):
-- **OCR (Optical Character Recognition)**: Scanned / rasterized PDFs are out of scope for V1.
-- **Distributed Queues & Cloud Storage**: No Celery, Redis, Kafka, AWS S3, or Docker infrastructure.
-- **Paid SaaS APIs for Embeddings**: Do not introduce paid OpenAI/Cohere embedding APIs; maintain local sentence-transformers.
 - **Complex Multi-Agent Frameworks**: Keep the implementation pure Python without LangChain/CrewAI/AutoGen abstractions.
-- **Database Migrations / SQL DBs**: Storage is handled strictly via ChromaDB.
+- **Distributed Queues & Message Brokers**: No Celery, Redis, Kafka, or RabbitMQ.
+- **Heavy Infrastructure**: No Kubernetes or distributed cloud orchestration.
+- **OCR for Hand-drawn / Scanned handwriting**: Focus remains on text-based academic/technical PDFs.
 
 ---
 
