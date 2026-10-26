@@ -32,6 +32,7 @@ class SemanticChunker:
     def calculate_similarity(self, embeddings: np.ndarray) -> list[float]:
         """
         Calculate cosine similarity between adjacent sentences.
+        Includes guard against zero-norm division.
         """
 
         similarities = []
@@ -40,9 +41,15 @@ class SemanticChunker:
             current = embeddings[i]
             next_sentence = embeddings[i + 1]
 
-            similarity = np.dot(current, next_sentence) / (
-                np.linalg.norm(current) * np.linalg.norm(next_sentence)
-            )
+            norm_current = np.linalg.norm(current)
+            norm_next = np.linalg.norm(next_sentence)
+
+            if norm_current == 0.0 or norm_next == 0.0:
+                similarity = 0.0
+            else:
+                similarity = np.dot(current, next_sentence) / (
+                    norm_current * norm_next
+                )
 
             similarities.append(float(similarity))
 
