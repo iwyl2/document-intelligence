@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useSyncExternalStore } from "react";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -11,7 +11,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
-  isLoading: true,
+  isLoading: false,
   login: () => false,
   logout: () => {},
 });
@@ -19,28 +19,31 @@ const AuthContext = createContext<AuthContextType>({
 const EXPECTED_PASSCODE =
   process.env.NEXT_PUBLIC_WORKSPACE_PASSCODE || "doc-intel-2026";
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+function subscribe(callback: () => void) {
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
 
-  useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem("doc_intel_session");
-      if (stored === "authenticated") {
-        setIsAuthenticated(true);
-      }
-    } catch {
-      // Ignore sessionStorage errors (e.g. incognito/disabled)
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+function getSnapshot(): boolean {
+  try {
+    return sessionStorage.getItem("doc_intel_session") === "authenticated";
+  } catch {
+    return false;
+  }
+}
+
+function getServerSnapshot(): boolean {
+  return false;
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const login = (passcode: string): boolean => {
     if (passcode.trim() === EXPECTED_PASSCODE.trim()) {
-      setIsAuthenticated(true);
       try {
         sessionStorage.setItem("doc_intel_session", "authenticated");
+        window.dispatchEvent(new Event("storage"));
       } catch {
         // Ignore
       }
@@ -50,16 +53,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
     try {
       sessionStorage.removeItem("doc_intel_session");
+      window.dispatchEvent(new Event("storage"));
     } catch {
       // Ignore
     }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading: false, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

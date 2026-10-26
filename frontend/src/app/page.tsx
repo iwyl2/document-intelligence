@@ -5,11 +5,9 @@ import Link from "next/link";
 import {
   FileText,
   Scissors,
-  Binary,
   Database,
   Sparkles,
   ShieldCheck,
-  CheckCircle2,
   ArrowRight,
   Lock,
   Layers,

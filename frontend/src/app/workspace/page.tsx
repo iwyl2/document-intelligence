@@ -10,11 +10,9 @@ import {
   Sparkles,
   CheckCircle2,
   AlertTriangle,
-  RotateCcw,
   SlidersHorizontal,
   Bookmark,
   Trash2,
-  Database,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { LoginModal } from "@/components/LoginModal";
@@ -76,9 +74,26 @@ export default function WorkspacePage() {
   };
 
   useEffect(() => {
+    let isMounted = true;
     if (isAuthenticated) {
-      refreshStatus();
+      getIndexStatus()
+        .then((status) => {
+          if (!isMounted) return;
+          setIndexStatus(status);
+          if (!status.is_empty && status.indexed_files.length > 0) {
+            setUploadedDoc({
+              file_name: status.indexed_files.join(", "),
+              num_pages: 0,
+              num_chunks: status.total_chunks,
+              message: "Loaded from active in-memory session",
+            });
+          }
+        })
+        .catch(() => {});
     }
+    return () => {
+      isMounted = false;
+    };
   }, [isAuthenticated]);
 
   // Sample prompt suggestions
@@ -106,7 +121,7 @@ export default function WorkspacePage() {
       // Add a system welcome message
       setMessages([
         {
-          id: `sys-${Date.now()}`,
+          id: `sys-${crypto.randomUUID()}`,
           role: "assistant",
           content: `Document "${res.file_name}" successfully indexed into in-memory ChromaDB (${res.num_pages} pages, ${res.num_chunks} semantic chunks). You can now ask questions with verifiable page citations!`,
           isGrounded: true,
@@ -160,7 +175,7 @@ export default function WorkspacePage() {
     setInputQuery("");
 
     const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
+      id: `user-${crypto.randomUUID()}`,
       role: "user",
       content: question,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -173,7 +188,7 @@ export default function WorkspacePage() {
       const response = await queryDocument(question, topK);
 
       const assistantMessage: ChatMessage = {
-        id: `assistant-${Date.now()}`,
+        id: `assistant-${crypto.randomUUID()}`,
         role: "assistant",
         content: response.answer,
         citedPages: response.cited_pages,

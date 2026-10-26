@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Cpu, FileText, Lock, LogOut } from "lucide-react";
+import { Cpu, Lock, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { checkBackendHealth } from "@/lib/api";
 import { LoginModal } from "./LoginModal";
