@@ -8,7 +8,11 @@ from document_intelligence.ingestion.pdf import extract_document
 from document_intelligence.models.generation import GenerationResponse
 from document_intelligence.processing.document import clean_document
 from document_intelligence.models.service import IngestionResult
-from document_intelligence.processing.embedder import Embedder
+from document_intelligence.processing.embedder import (
+    BaseEmbedder,
+    LocalEmbedder,
+    get_embedder,
+)
 from document_intelligence.processing.semantic_chunker import SemanticChunker
 from document_intelligence.retrieval.retriever import Retriever
 from document_intelligence.storage.vector_storage import VectorStorage
@@ -22,7 +26,7 @@ class RagService:
 
     def __init__(
         self,
-        embedder: Embedder,
+        embedder: BaseEmbedder,
         chunker: SemanticChunker,
         storage: VectorStorage,
         retriever: Retriever,
@@ -44,12 +48,16 @@ class RagService:
         cls,
         collection_name: str = "document_intelligence",
         chroma_client: Optional[chromadb.ClientAPI] = None,
+        embedder: Optional[BaseEmbedder] = None,
     ) -> "RagService":
         """
         Factory method to initialize the service with production defaults
-        (SentenceTransformer embedder, ChromaDB collection, OpenRouter LLM).
+        Auto-selects LocalEmbedder or CloudEmbedder based on EMBEDDER_BACKEND.
         """
-        embedder = Embedder()
+
+        if embedder is None:
+            embedder = get_embedder()
+
         chunker = SemanticChunker(embedder=embedder)
 
         if chroma_client is None:
