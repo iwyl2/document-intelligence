@@ -1,12 +1,12 @@
 from typing import List
 
 from document_intelligence.models.retriever import RetrievedChunk
-from document_intelligence.processing.embedder import Embedder
+from document_intelligence.processing.embedder import BaseEmbedder
 from document_intelligence.storage.vector_storage import VectorStorage
 
 
 class Retriever:
-    def __init__(self, embedder: Embedder, vector_storage: VectorStorage):
+    def __init__(self, embedder: BaseEmbedder, vector_storage: VectorStorage):
         self.embedder = embedder
         self.vector_storage = vector_storage
 

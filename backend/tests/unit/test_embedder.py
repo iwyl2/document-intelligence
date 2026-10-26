@@ -1,9 +1,10 @@
 import numpy as np
 from sentence_transformers import util
-from document_intelligence.processing.embedder import Embedder
+from document_intelligence.processing.embedder import LocalEmbedder
+
 
 def test_text_embedding_shape_and_type():
-    embedder = Embedder()
+    embedder = LocalEmbedder()
     text = "Hello world"
 
     embed = embedder.encode(text)
@@ -18,7 +19,7 @@ def test_text_embedding_shape_and_type():
 
 def test_embedding_semantic_similarity():
     """Optional: Assert semantic behavior using cosine similarity."""
-    embedder = Embedder()
+    embedder = LocalEmbedder()
 
     vec1 = embedder.encode("The quick brown fox jumps over the lazy dog")
     vec2 = embedder.encode("A fast brown fox leaps over a sleepy hound")

@@ -5,7 +5,7 @@ import chromadb
 from document_intelligence.ingestion.pdf import extract_document
 from document_intelligence.processing.document import clean_document
 from document_intelligence.processing.semantic_chunker import SemanticChunker
-from document_intelligence.processing.embedder import Embedder
+from document_intelligence.processing.embedder import LocalEmbedder
 from document_intelligence.retrieval.retriever import Retriever
 from document_intelligence.storage.vector_storage import VectorStorage
 
@@ -62,7 +62,7 @@ def build_retriever():
     document = extract_document(document_path)
     cleaned_document = clean_document(document)
 
-    embedder = Embedder()
+    embedder = LocalEmbedder()
     chunker = SemanticChunker(embedder=embedder)
 
     chunks = []

@@ -4,7 +4,7 @@ from pathlib import Path
 from document_intelligence.ingestion.pdf import extract_document
 from document_intelligence.processing.document import clean_document
 from document_intelligence.processing.semantic_chunker import SemanticChunker
-from document_intelligence.processing.embedder import Embedder
+from document_intelligence.processing.embedder import LocalEmbedder
 from document_intelligence.retrieval.retriever import Retriever
 from document_intelligence.storage.vector_storage import VectorStorage
 
@@ -65,7 +65,7 @@ def build_retriever():
 
     cleaned_document = clean_document(document)
 
-    embedder = Embedder()
+    embedder = LocalEmbedder()
 
     chunker = SemanticChunker(embedder=embedder)
 
@@ -142,7 +142,9 @@ def test_retrieval_evaluation():
 
         print(f"Matched: {matched_terms}")
 
-        print(f"Missing: {[term for term in expected_terms if term.lower() not in retrieved_text]}")
+        print(
+            f"Missing: {[term for term in expected_terms if term.lower() not in retrieved_text]}"
+        )
 
         for index, chunk in enumerate(chunks, start=1):
             print(f"\n--- RESULT {index} ---")

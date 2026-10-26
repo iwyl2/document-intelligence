@@ -1,5 +1,5 @@
 from document_intelligence.processing.semantic_chunker import SemanticChunker
-from document_intelligence.processing.embedder import Embedder
+from document_intelligence.processing.embedder import LocalEmbedder
 
 
 def test_semantic_chunker():
@@ -21,7 +21,7 @@ def test_semantic_chunker():
     Students can access the library during weekdays.
     """
 
-    embedder = Embedder()
+    embedder = LocalEmbedder()
     chunker = SemanticChunker(embedder=embedder)
 
     chunks = chunker.chunk(text)
