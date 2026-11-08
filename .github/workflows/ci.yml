@@ -33,6 +33,9 @@ jobs:
 
       - name: Run tests
         run: uv run pytest
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
   frontend-ci:
     name: Frontend Lint & Build
