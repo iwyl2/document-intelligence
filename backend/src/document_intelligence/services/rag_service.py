@@ -75,7 +75,12 @@ class RagService:
             generator=generator,
         )
 
-    def index_document(self, file_path: Path | str) -> IngestionResult:
+    def index_document(
+        self,
+        file_path: Path | str,
+        session_id: str | None = None,
+        file_name: str | None = None,
+    ) -> IngestionResult:
         """
         Full ingestion pipeline:
         1. Extract pages from PDF (extract_document)
@@ -89,46 +94,54 @@ class RagService:
         document = extract_document(file_path=file_path)
         cleaned_doc = clean_document(document=document)
 
+        doc_name = file_name or document.file_name
+
         all_chunks = []
         for page in cleaned_doc.pages:
             page_chunks = self.chunker.chunk(
-                text=page.text, page_no=page.page_number, file_name=document.file_name
+                text=page.text, page_no=page.page_number, file_name=doc_name
             )
             all_chunks.extend(page_chunks)
 
         if all_chunks:
             embedded_chunks = self.embedder.embed_chunks(chunks=all_chunks)
-            self.storage.add_chunks(embedded_chunks=embedded_chunks)
+            self.storage.add_chunks(
+                embedded_chunks=embedded_chunks, session_id=session_id
+            )
 
         return IngestionResult(
-            file_name=document.file_name,
+            file_name=doc_name,
             num_pages=len(document.pages),
             num_chunks=len(all_chunks),
         )
 
-    def query(self, question: str, top_k: int = 3) -> GenerationResponse:
+    def query(
+        self, question: str, top_k: int = 3, session_id: str | None = None
+    ) -> GenerationResponse:
         """
         RAG query pipeline:
         1. Retrieve top-k relevant chunks (retriever.retrieve_chunks)
         2. Generate grounded answer with citations (generator.generate)
         Returns GenerationResponse(answer, cited_pages, is_grounded).
         """
-        retrieved_chunks = self.retriever.retrieve_chunks(query=question, top_k=top_k)
+        retrieved_chunks = self.retriever.retrieve_chunks(
+            query=question, top_k=top_k, session_id=session_id
+        )
         return self.generator.generate(query=question, chunks=retrieved_chunks)
 
-    def get_status(self) -> dict:
+    def get_status(self, session_id: str | None = None) -> dict:
         """Inspect the current in-memory vector storage status."""
-        total_chunks = self.storage.count()
-        files = self.storage.get_indexed_files()
+        total_chunks = self.storage.count(session_id=session_id)
+        files = self.storage.get_indexed_files(session_id=session_id)
         return {
             "total_chunks": total_chunks,
             "indexed_files": files,
             "is_empty": total_chunks == 0,
         }
 
-    def clear_index(self) -> dict:
+    def clear_index(self, session_id: str | None = None) -> dict:
         """Clear all indexed documents and chunks from memory."""
-        self.storage.clear()
+        self.storage.clear(session_id=session_id)
         return {
             "message": "In-memory vector store successfully cleared.",
             "total_chunks": 0,

@@ -8,3 +8,11 @@ class DocumentNotFoundError(DocumentIngestionError):
 
 class DocumentReadError(DocumentIngestionError):
     """Raised when a document cannot be read or parsed."""
+
+
+class VectorDatabaseError(Exception):
+    """Base exception for vector database error"""
+
+
+class CollectionEmptyError(VectorDatabaseError):
+    """Raised when a collection is empty"""

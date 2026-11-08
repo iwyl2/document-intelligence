@@ -1,6 +1,16 @@
 import tempfile
 from pathlib import Path
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    Header,
+    Query,
+    Request,
+    UploadFile,
+    status,
+)
 
 from document_intelligence.api.schemas import (
     QueryRequest,
@@ -17,6 +27,14 @@ def get_rag_service(request: Request) -> RagService:
     return request.app.state.rag_service
 
 
+def get_session_id(
+    x_session_id: str | None = Header(default=None, alias="X-Session-ID"),
+    session_id: str | None = Query(default=None),
+) -> str | None:
+    """Extract session_id from X-Session-ID header, with query param fallback."""
+    return x_session_id or session_id
+
+
 @router.post(
     "/documents/upload",
     response_model=UploadResponse,
@@ -24,7 +42,9 @@ def get_rag_service(request: Request) -> RagService:
     summary="Upload and index a PDF document",
 )
 async def upload_document(
-    file: UploadFile = File(...), service: RagService = Depends(get_rag_service)
+    file: UploadFile = File(...),
+    service: RagService = Depends(get_rag_service),
+    session_id: str | None = Depends(get_session_id),
 ) -> UploadResponse:
     """
     Accepts a PDF file, writes it to a temporary file,
@@ -48,7 +68,9 @@ async def upload_document(
         temp_path = Path(temp_file.name)
 
     try:
-        result = service.index_document(file_path=temp_path)
+        result = service.index_document(
+            file_path=temp_path, session_id=session_id, file_name=file.filename
+        )
         return UploadResponse(
             file_name=file.filename,
             num_pages=result.num_pages,
@@ -69,12 +91,15 @@ async def upload_document(
 def query_document(
     request: QueryRequest,
     service: RagService = Depends(get_rag_service),
+    session_id: str | None = Depends(get_session_id),
 ) -> QueryResponse:
     """
     Performs dense vector retrieval for the question and generates
     a grounded answer with inline [Page X] citations.
     """
-    response = service.query(question=request.question, top_k=request.top_k)
+    response = service.query(
+        question=request.question, top_k=request.top_k, session_id=session_id
+    )
     return QueryResponse(
         answer=response.answer,
         cited_pages=response.cited_pages,
@@ -83,10 +108,16 @@ def query_document(
 
 
 @router.get("/documents/status", summary="Check in-memory vector store status")
-def get_documents_status(service: RagService = Depends(get_rag_service)):
-    return service.get_status()
+def get_documents_status(
+    service: RagService = Depends(get_rag_service),
+    session_id: str | None = Depends(get_session_id),
+):
+    return service.get_status(session_id=session_id)
 
 
 @router.delete("/documents", summary="Clear all in-memory indexed documents")
-def clear_documents(service: RagService = Depends(get_rag_service)):
-    return service.clear_index()
+def clear_documents(
+    service: RagService = Depends(get_rag_service),
+    session_id: str | None = Depends(get_session_id),
+):
+    return service.clear_index(session_id=session_id)

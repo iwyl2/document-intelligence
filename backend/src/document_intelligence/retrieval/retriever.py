@@ -10,17 +10,19 @@ class Retriever:
         self.embedder = embedder
         self.vector_storage = vector_storage
 
-    def _retrieve(self, query: str, top_k: int):
+    def _retrieve(self, query: str, top_k: int, session_id: str | None = None):
         query_embedding = self.embedder.encode(query)
 
         results = self.vector_storage.search(
-            query_embedding=query_embedding, top_k=top_k
+            query_embedding=query_embedding, top_k=top_k, session_id=session_id
         )
 
         return results
 
-    def retrieve_chunks(self, query: str, top_k: int = 3) -> List[RetrievedChunk]:
-        results = self._retrieve(query=query, top_k=top_k)
+    def retrieve_chunks(
+        self, query: str, top_k: int = 3, session_id: str | None = None
+    ) -> List[RetrievedChunk]:
+        results = self._retrieve(query=query, top_k=top_k, session_id=session_id)
         chunks = []
 
         documents = results.get("documents", [[]])[0]
