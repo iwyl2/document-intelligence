@@ -1,9 +1,12 @@
-from document_intelligence.services.rag_service import RagService
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from document_intelligence.api.errors import register_exception_handlers
 from document_intelligence.api.routes import router
-from contextlib import asynccontextmanager
+from document_intelligence.db.models import Base
+from document_intelligence.db.session import engine
+from document_intelligence.services.rag_service import RagService
 
 
 @asynccontextmanager
@@ -12,6 +15,10 @@ async def lifespan(app: FastAPI):
     Application Lifespan context manager.
     Runs startup tasks before receiving requests, and cleanup tasks upon shutdown.
     """
+    print("Verifying database schema...")
+    Base.metadata.create_all(bind=engine)
+    print("Database schema verified.")
+
     print("Initialize the rag service")
     app.state.rag_service = RagService.create_default()
     print("Rag service initialization success")
