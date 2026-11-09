@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from document_intelligence.api.errors import register_exception_handlers
 from document_intelligence.api.routes import router
+from document_intelligence.api.auth_routes import router as auth_router
 from document_intelligence.db.models import Base
 from document_intelligence.db.session import engine
 from document_intelligence.services.rag_service import RagService
@@ -46,6 +47,7 @@ app.add_middleware(
 register_exception_handlers(app)
 
 app.include_router(router)
+app.include_router(auth_router)
 
 
 @app.get("/health", tags=["Health"])
