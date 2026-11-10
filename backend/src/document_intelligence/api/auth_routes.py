@@ -40,7 +40,6 @@ async def register(
             detail="A user with this email address already exists.",
         )
 
-    # First user bootstrap pattern
     is_first_user = db.query(User).count() == 0
     is_active = True if is_first_user else False
     is_admin = True if is_first_user else False
@@ -55,7 +54,6 @@ async def register(
     db.add(user)
     db.flush()
 
-    # Automatically provision a default workspace session for the user
     default_session = WorkspaceSession(
         user_id=user.id,
         name="Default Workspace",

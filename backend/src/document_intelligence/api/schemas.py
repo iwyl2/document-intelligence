@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 from pydantic import BaseModel, Field
 
 
@@ -88,3 +89,24 @@ class UserResponse(BaseModel):
 
 class UserStatusUpdateRequest(BaseModel):
     is_active: bool = Field(..., description="New active status for the user")
+
+
+class WorkspaceCreateRequest(BaseModel):
+    name: str = Field(..., description="Name of the workspace")
+
+
+class DocumentRecordResponse(BaseModel):
+    id: str
+    file_name: str
+    num_pages: int
+    num_chunks: int
+    uploaded_at: datetime
+
+
+class WorkspaceResponse(BaseModel):
+    id: str
+    name: str
+    created_at: datetime
+    documents: List[DocumentRecordResponse]
+
+    model_config = {"from_attributes", True}
