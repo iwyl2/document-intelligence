@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from document_intelligence.api.workspace_routes import router as workspace_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -48,6 +49,7 @@ register_exception_handlers(app)
 
 app.include_router(router)
 app.include_router(auth_router)
+app.include_router(workspace_router)
 
 
 @app.get("/health", tags=["Health"])
