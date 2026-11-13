@@ -102,6 +102,8 @@ class DocumentRecordResponse(BaseModel):
     num_chunks: int
     uploaded_at: datetime
 
+    model_config = {"from_attributes": True}
+
 
 class WorkspaceResponse(BaseModel):
     id: str
@@ -109,4 +111,4 @@ class WorkspaceResponse(BaseModel):
     created_at: datetime
     documents: List[DocumentRecordResponse]
 
-    model_config = {"from_attributes", True}
+    model_config = {"from_attributes": True}
