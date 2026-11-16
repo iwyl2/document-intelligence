@@ -14,6 +14,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from document_intelligence.api.schemas import (
+    CitationSource,
     QueryRequest,
     QueryResponse,
     UploadResponse,
@@ -161,6 +162,10 @@ def query_document(
     )
     return QueryResponse(
         answer=response.answer,
+        cited_sources=[
+            CitationSource(file_name=s["file_name"], page_number=s["page_number"])
+            for s in response.cited_sources
+        ],
         cited_pages=response.cited_pages,
         is_grounded=response.is_grounded,
     )

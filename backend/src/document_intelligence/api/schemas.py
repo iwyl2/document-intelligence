@@ -21,12 +21,21 @@ class QueryRequest(BaseModel):
     )
 
 
+class CitationSource(BaseModel):
+    file_name: str = Field(..., description="Source document file name.")
+    page_number: int = Field(..., description="1-based page number cited.")
+
+
 class QueryResponse(BaseModel):
     """Response returned after semantic retrieval and grounded generation."""
 
     answer: str = Field(
         ...,
         description="The grounded answer with inline citations.",
+    )
+    cited_sources: list[CitationSource] = Field(
+        default_factory=list,
+        description="Structured citations attributing claims to file and page.",
     )
     cited_pages: list[int] = Field(
         default_factory=list,
