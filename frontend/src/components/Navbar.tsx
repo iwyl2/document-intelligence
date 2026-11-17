@@ -3,14 +3,14 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Cpu, Lock, LogOut } from "lucide-react";
+import { Cpu, Lock, LogOut, ShieldCheck, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { checkBackendHealth } from "@/lib/api";
 import { LoginModal } from "./LoginModal";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
 
@@ -33,10 +33,13 @@ export function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-semibold tracking-tight text-zinc-100 flex items-center gap-1.5">
-                DocIntel <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">v1</span>
+                DocIntel{" "}
+                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40 text-emerald-400">
+                  v2 Multi-Tenant
+                </span>
               </span>
               <span className="text-[10px] text-zinc-400 font-mono -mt-0.5">
-                Grounded RAG Engine
+                Grounded Document Intelligence
               </span>
             </div>
           </Link>
@@ -55,7 +58,12 @@ export function Navbar() {
                 }`}
               />
               <span className="text-zinc-400">
-                API: {backendOnline === true ? "Online" : backendOnline === false ? "Offline" : "Checking"}
+                API:{" "}
+                {backendOnline === true
+                  ? "Online"
+                  : backendOnline === false
+                  ? "Offline"
+                  : "Checking"}
               </span>
             </div>
 
@@ -73,18 +81,36 @@ export function Navbar() {
                 <Link
                   href="/workspace"
                   className={`text-xs font-medium transition-colors ${
-                    pathname === "/workspace" ? "text-emerald-400 font-semibold" : "text-zinc-400 hover:text-zinc-200"
+                    pathname === "/workspace"
+                      ? "text-emerald-400 font-semibold"
+                      : "text-zinc-400 hover:text-zinc-200"
                   }`}
                 >
                   Workspace
                 </Link>
+
+                {/* User Info Badge */}
+                <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-zinc-900/80 border border-zinc-800 text-xs text-zinc-300">
+                  {user?.is_admin ? (
+                    <span className="flex items-center gap-1 text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      <ShieldCheck className="w-3 h-3" />
+                      Admin
+                    </span>
+                  ) : (
+                    <User className="w-3.5 h-3.5 text-zinc-400" />
+                  )}
+                  <span className="max-w-[140px] truncate text-zinc-300 font-mono text-[11px]">
+                    {user?.email}
+                  </span>
+                </div>
+
                 <button
                   onClick={logout}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 border border-transparent hover:border-zinc-800 rounded-lg transition-colors"
-                  title="Lock workspace session"
+                  title="Sign out of workspace session"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Exit</span>
+                  <span className="hidden sm:inline">Sign Out</span>
                 </button>
               </>
             ) : (
@@ -93,7 +119,7 @@ export function Navbar() {
                 className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold rounded-lg shadow-sm transition-all"
               >
                 <Lock className="w-3.5 h-3.5" />
-                Launch Workspace
+                Sign In / Register
               </button>
             )}
           </nav>

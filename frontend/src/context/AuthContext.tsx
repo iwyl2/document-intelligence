@@ -1,68 +1,114 @@
 "use client";
 
-import React, { createContext, useContext, useSyncExternalStore } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { getMeApi, loginApi, registerApi, UserResponse } from "@/lib/api";
 
 interface AuthContextType {
+  user: UserResponse | null;
+  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (passcode: string) => boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string) => Promise<{ success: boolean; user?: UserResponse; error?: string }>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
+  user: null,
+  token: null,
   isAuthenticated: false,
-  isLoading: false,
-  login: () => false,
+  isLoading: true,
+  login: async () => ({ success: false }),
+  register: async () => ({ success: false }),
   logout: () => {},
+  refreshUser: async () => {},
 });
 
-const EXPECTED_PASSCODE =
-  process.env.NEXT_PUBLIC_WORKSPACE_PASSCODE || "doc-intel-2026";
-
-function subscribe(callback: () => void) {
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
-}
-
-function getSnapshot(): boolean {
-  try {
-    return sessionStorage.getItem("doc_intel_session") === "authenticated";
-  } catch {
-    return false;
-  }
-}
-
-function getServerSnapshot(): boolean {
-  return false;
-}
+const TOKEN_STORAGE_KEY = "doc_intel_jwt_token";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<UserResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (passcode: string): boolean => {
-    if (passcode.trim() === EXPECTED_PASSCODE.trim()) {
-      try {
-        sessionStorage.setItem("doc_intel_session", "authenticated");
-        window.dispatchEvent(new Event("storage"));
-      } catch {
-        // Ignore
-      }
-      return true;
+  // Initialize and rehydrate from storage
+  useEffect(() => {
+    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (storedToken) {
+      setToken(storedToken);
+      getMeApi(storedToken)
+        .then((userData) => {
+          setUser(userData);
+        })
+        .catch(() => {
+          // Token invalid or expired
+          localStorage.removeItem(TOKEN_STORAGE_KEY);
+          setToken(null);
+          setUser(null);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
     }
-    return false;
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    try {
+      const res = await loginApi(email, password);
+      localStorage.setItem(TOKEN_STORAGE_KEY, res.access_token);
+      setToken(res.access_token);
+      const userData = await getMeApi(res.access_token);
+      setUser(userData);
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Authentication failed";
+      return { success: false, error: message };
+    }
+  };
+
+  const register = async (email: string, password: string) => {
+    try {
+      const newUser = await registerApi(email, password);
+      return { success: true, user: newUser };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Registration failed";
+      return { success: false, error: message };
+    }
   };
 
   const logout = () => {
-    try {
-      sessionStorage.removeItem("doc_intel_session");
-      window.dispatchEvent(new Event("storage"));
-    } catch {
-      // Ignore
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    setToken(null);
+    setUser(null);
+  };
+
+  const refreshUser = async () => {
+    if (token) {
+      try {
+        const userData = await getMeApi(token);
+        setUser(userData);
+      } catch {
+        logout();
+      }
     }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading: false, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isAuthenticated: !!token && !!user,
+        isLoading,
+        login,
+        register,
+        logout,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
