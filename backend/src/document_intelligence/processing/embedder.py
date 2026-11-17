@@ -137,10 +137,17 @@ def get_embedder(backend: str | None = None) -> BaseEmbedder:
     """
     Factory function to instantiate the configured BaseEmbedder.
     Inspects parameter or the EMBEDDER_BACKEND environment variable.
-    Defaults to 'local'.
+    Auto-selects 'cloud' if GEMINI_API_KEY is present, otherwise defaults to 'local'.
     """
 
-    selected_backend = backend or os.getenv("EMBEDDER_BACKEND", "local").strip().lower()
+    selected_backend = backend or os.getenv("EMBEDDER_BACKEND")
+    if not selected_backend:
+        if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
+            selected_backend = "cloud"
+        else:
+            selected_backend = "local"
+
+    selected_backend = selected_backend.strip().lower()
 
     if selected_backend in ("cloud", "gemini"):
         return CloudEmbedder()
