@@ -46,7 +46,7 @@ interface ChatMessage {
 }
 
 export default function WorkspacePage() {
-  const { user, token, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { token, isAuthenticated, isLoading: authLoading } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Workspaces State
@@ -54,7 +54,6 @@ export default function WorkspacePage() {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
-  const [isWorkspacesLoading, setIsWorkspacesLoading] = useState(false);
 
   // Ingestion & Status
   const [indexStatus, setIndexStatus] = useState<IndexStatusResponse | null>(null);
@@ -75,7 +74,6 @@ export default function WorkspacePage() {
   // Fetch workspaces for current user
   const loadWorkspaces = useCallback(async () => {
     if (!token) return;
-    setIsWorkspacesLoading(true);
     try {
       const data = await getWorkspacesApi(token);
       setWorkspaces(data);
@@ -84,8 +82,6 @@ export default function WorkspacePage() {
       }
     } catch {
       // Ignored if offline
-    } finally {
-      setIsWorkspacesLoading(false);
     }
   }, [token, activeWorkspaceId]);
 

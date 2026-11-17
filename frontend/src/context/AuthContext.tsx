@@ -36,9 +36,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
     if (storedToken) {
-      setToken(storedToken);
       getMeApi(storedToken)
         .then((userData) => {
+          setToken(storedToken);
           setUser(userData);
         })
         .catch(() => {
