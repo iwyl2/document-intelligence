@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from document_intelligence.api.workspace_routes import router as workspace_router
 from fastapi import FastAPI
@@ -37,9 +38,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "*")
+if allowed_origins_raw == "*":
+    allowed_origins = ["*"]
+else:
+    allowed_origins = [o.strip() for o in allowed_origins_raw.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
