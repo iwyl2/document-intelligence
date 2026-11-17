@@ -9,6 +9,10 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/control_plane.db")
 
+# SQLAlchemy 2.0 requires postgresql:// instead of postgres://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 # If using local SQLite file, ensure the parent directory exists
 if DATABASE_URL.startswith("sqlite:///"):
     db_file_path = DATABASE_URL.replace("sqlite:///", "")
