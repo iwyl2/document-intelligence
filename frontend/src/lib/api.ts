@@ -256,6 +256,24 @@ export async function clearDocuments(
   return res.json();
 }
 
+export async function deleteDocumentApi(
+  documentId: string,
+  token?: string | null,
+  sessionId?: string | null
+): Promise<{ message: string; id: string }> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/documents/${documentId}`, {
+    method: "DELETE",
+    headers: authHeaders(token, sessionId),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ detail: "Failed to delete document" }));
+    throw new Error(errorData.detail || `Delete failed with code ${res.status}`);
+  }
+
+  return res.json();
+}
+
 export async function uploadDocument(
   file: File,
   token?: string | null,

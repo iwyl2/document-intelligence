@@ -29,6 +29,7 @@ import {
   getWorkspacesApi,
   createWorkspaceApi,
   deleteWorkspaceApi,
+  deleteDocumentApi,
   WorkspaceResponse,
   IndexStatusResponse,
   CitationSource,
@@ -198,12 +199,27 @@ export default function WorkspacePage() {
     setIsClearing(true);
     try {
       await clearDocuments(token, activeWorkspaceId);
+      await loadWorkspaces();
       await refreshStatus();
       setMessages([]);
     } catch (err: unknown) {
       setUploadError(err instanceof Error ? err.message : "Failed to clear documents.");
     } finally {
       setIsClearing(false);
+    }
+  };
+
+  // Delete a specific document
+  const handleDeleteDocument = async (documentId: string, fileName: string) => {
+    if (!token || !activeWorkspaceId) return;
+    if (!confirm(`Delete document "${fileName}" and all its vector chunks?`)) return;
+
+    try {
+      await deleteDocumentApi(documentId, token, activeWorkspaceId);
+      await loadWorkspaces();
+      await refreshStatus();
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : "Failed to delete document.");
     }
   };
 
@@ -475,11 +491,20 @@ export default function WorkspacePage() {
                     key={doc.id}
                     className="p-3 bg-zinc-900/70 border border-zinc-800/80 rounded-xl space-y-1 hover:border-zinc-700 transition-colors"
                   >
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span className="text-xs font-semibold text-zinc-200 truncate flex-1">
-                        {doc.file_name}
-                      </span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                        <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="text-xs font-semibold text-zinc-200 truncate">
+                          {doc.file_name}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteDocument(doc.id, doc.file_name)}
+                        title="Delete document and vector chunks"
+                        className="p-1 text-zinc-500 hover:text-rose-400 rounded transition-colors shrink-0"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                     <div className="flex items-center justify-between text-[10px] text-zinc-400 font-mono">
                       <span>{doc.num_pages} Pages • {doc.num_chunks} Chunks</span>

@@ -204,12 +204,29 @@ def test_api_selective_delete_leaves_other_session_intact(auth_api_client):
     )
     assert del_res.status_code == 200
 
-    # Assert Alpha is now empty
+    # Assert Alpha is now empty in vector store
     status_a = auth_api_client.get(
         "/api/v1/documents/status", headers=headers_alpha
     ).json()
     assert status_a["total_chunks"] == 0
     assert status_a["is_empty"] is True
+
+    # Assert Alpha document records are purged from relational DB
+    with auth_api_client.testing_session() as db:
+        alpha_docs = (
+            db.query(DocumentRecord)
+            .filter(DocumentRecord.session_id == session_alpha)
+            .count()
+        )
+        assert alpha_docs == 0
+
+        # Assert Beta document records remain intact in relational DB
+        beta_docs = (
+            db.query(DocumentRecord)
+            .filter(DocumentRecord.session_id == session_beta)
+            .count()
+        )
+        assert beta_docs > 0
 
     # Assert Beta is still intact
     status_b = auth_api_client.get(
@@ -296,3 +313,84 @@ def test_upload_without_session_id_falls_back_to_default_workspace(auth_api_clie
     )
     assert status_res.status_code == 200
     assert status_res.json()["total_chunks"] > 0
+
+
+def test_delete_single_document_dual_plane_purge(auth_api_client):
+    """
+    Verifies that DELETE /api/v1/documents/{document_id} deletes chunks from vector storage
+    and deletes the DocumentRecord row from the relational database.
+    """
+    headers, ws_id = _setup_user_and_workspace(
+        auth_api_client, "single_del@corp.internal", "Single Del WS"
+    )
+
+    # 1. Upload document
+    with open(SIMPLE_PDF, "rb") as f:
+        upload_res = auth_api_client.post(
+            "/api/v1/documents/upload",
+            files={"file": ("simple_text.pdf", f, "application/pdf")},
+            headers={**headers, "X-Session-ID": ws_id},
+        )
+    assert upload_res.status_code == 201
+
+    # Get document id from workspace
+    ws_res = auth_api_client.get(f"/api/v1/workspaces/{ws_id}", headers=headers)
+    assert ws_res.status_code == 200
+    docs = ws_res.json()["documents"]
+    assert len(docs) == 1
+    doc_id = docs[0]["id"]
+
+    # 2. Delete the single document
+    del_res = auth_api_client.delete(
+        f"/api/v1/documents/{doc_id}",
+        headers={**headers, "X-Session-ID": ws_id},
+    )
+    assert del_res.status_code == 200
+    assert "deleted successfully" in del_res.json()["message"]
+
+    # 3. Verify vector storage is empty
+    status_res = auth_api_client.get(
+        "/api/v1/documents/status",
+        headers={**headers, "X-Session-ID": ws_id},
+    )
+    assert status_res.json()["total_chunks"] == 0
+
+    # 4. Verify relational DB row is deleted
+    with auth_api_client.testing_session() as db:
+        remaining_docs = (
+            db.query(DocumentRecord)
+            .filter(DocumentRecord.id == doc_id)
+            .count()
+        )
+        assert remaining_docs == 0
+
+
+def test_delete_single_document_cross_tenant_rejected_with_404(auth_api_client):
+    """
+    Verifies that User Beta cannot delete User Alpha's document (returns 404).
+    """
+    # 1. User Alpha creates document
+    headers_alpha, ws_alpha_id = _setup_user_and_workspace(
+        auth_api_client, "alpha_owner@corp.internal", "Alpha Owner WS"
+    )
+    with open(SIMPLE_PDF, "rb") as f:
+        auth_api_client.post(
+            "/api/v1/documents/upload",
+            files={"file": ("simple_text.pdf", f, "application/pdf")},
+            headers={**headers_alpha, "X-Session-ID": ws_alpha_id},
+        )
+    ws_res = auth_api_client.get(f"/api/v1/workspaces/{ws_alpha_id}", headers=headers_alpha)
+    doc_id = ws_res.json()["documents"][0]["id"]
+
+    # 2. User Beta registers
+    headers_beta, ws_beta_id = _setup_user_and_workspace(
+        auth_api_client, "beta_attacker@corp.internal", "Beta WS"
+    )
+
+    # 3. User Beta tries to delete User Alpha's doc using User Beta's session
+    del_res = auth_api_client.delete(
+        f"/api/v1/documents/{doc_id}",
+        headers={**headers_beta, "X-Session-ID": ws_beta_id},
+    )
+    assert del_res.status_code == 404
+    assert "not found" in del_res.json()["detail"].lower()

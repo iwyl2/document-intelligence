@@ -139,6 +139,15 @@ class RagService:
             "is_empty": total_chunks == 0,
         }
 
+    def delete_document(self, file_name: str, session_id: str | None = None) -> dict:
+        """Delete all chunks for a specific document from vector storage."""
+        self.storage.delete_file(file_name=file_name, session_id=session_id)
+        remaining_chunks = self.storage.count(session_id=session_id)
+        return {
+            "message": f"Document '{file_name}' deleted from vector store.",
+            "total_chunks": remaining_chunks,
+        }
+
     def clear_index(self, session_id: str | None = None) -> dict:
         """Clear all indexed documents and chunks from memory."""
         self.storage.clear(session_id=session_id)

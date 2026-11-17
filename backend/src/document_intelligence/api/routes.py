@@ -194,4 +194,46 @@ def clear_documents(
     workspace = _resolve_workspace_session(
         session_id=session_id, current_user=current_user, db=db
     )
-    return service.clear_index(session_id=workspace.id)
+    result = service.clear_index(session_id=workspace.id)
+    db.query(DocumentRecord).filter(DocumentRecord.session_id == workspace.id).delete()
+    db.commit()
+    return result
+
+
+@router.delete(
+    "/documents/{document_id}",
+    summary="Delete a specific document and its vector chunks",
+    status_code=status.HTTP_200_OK,
+)
+def delete_document(
+    document_id: str,
+    service: RagService = Depends(get_rag_service),
+    session_id: str | None = Depends(get_session_id),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    workspace = _resolve_workspace_session(
+        session_id=session_id, current_user=current_user, db=db
+    )
+    doc_record = (
+        db.query(DocumentRecord)
+        .filter(
+            DocumentRecord.id == document_id,
+            DocumentRecord.session_id == workspace.id,
+        )
+        .first()
+    )
+    if not doc_record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document record not found in active workspace.",
+        )
+
+    service.delete_document(file_name=doc_record.file_name, session_id=workspace.id)
+    db.delete(doc_record)
+    db.commit()
+
+    return {
+        "message": f"Document '{doc_record.file_name}' deleted successfully.",
+        "id": document_id,
+    }

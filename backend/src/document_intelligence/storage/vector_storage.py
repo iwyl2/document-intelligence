@@ -61,6 +61,11 @@ class VectorStorage:
         files = {m["file_name"] for m in data["metadatas"] if m and "file_name" in m}
         return sorted(list(files))
 
+    def delete_file(self, file_name: str, session_id: str | None = None) -> None:
+        """Delete all chunks belonging to a specific file from the collection."""
+        collection = self._get_collections(session_id=session_id)
+        collection.delete(where={"file_name": file_name})
+
     def clear(self, session_id: str | None = None) -> None:
         """Completely purge the collection and recreate a fresh empty one."""
         try:
