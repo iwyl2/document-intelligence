@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Document Intelligence API",
     description="RAG-powered Document Intelligence engine with grounded answers and inline citations.",
-    version="0.1.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 

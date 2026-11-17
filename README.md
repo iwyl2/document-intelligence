@@ -2,11 +2,13 @@
 
 **Grounded Retrieval-Augmented Generation (RAG) engine with strict page-level citation attribution and deterministic hallucination fallback.**
 
+![Version](https://img.shields.io/badge/version-2.0.0-blue?style=flat-square)
 ![Python 3.13](https://img.shields.io/badge/python-3.13-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Package Manager](https://img.shields.io/badge/managed%20by-uv-DE5FE9?style=flat-square)
-![Frontend](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
+![Frontend](https://img.shields.io/badge/Next.js-16.4.6-black?style=flat-square&logo=next.js)
 ![Vector DB](https://img.shields.io/badge/storage-ChromaDB-orange?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-26%20passed%20%7C%20100%25-brightgreen?style=flat-square)
+![Control Plane](https://img.shields.io/badge/control--plane-PostgreSQL%20%7C%20SQLite-blue?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-67%20passed%20%7C%20100%25-brightgreen?style=flat-square)
 
 ---
 
@@ -182,13 +184,32 @@ uv run --directory backend document-intelligence
 
 ## API Reference
 
+### Health & Core Ingestion
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `GET` | `/health` | Health check endpoint returning API availability status. |
-| `POST` | `/api/v1/documents/upload` | Uploads and indexes a PDF document into ChromaDB. |
-| `GET` | `/api/v1/documents/status` | Returns chunk count and file names in the active in-memory index. |
-| `DELETE` | `/api/v1/documents` | Atomically clears all indexed documents from the in-memory vector store. |
-| `POST` | `/api/v1/query` | Executes semantic retrieval and returns a grounded answer with cited page numbers. |
+| `POST` | `/api/v1/documents/upload` | Uploads, chunks, embeds, and indexes a PDF document into workspace session. |
+| `GET` | `/api/v1/documents/status` | Returns chunk count and indexed file names for the active workspace. |
+| `DELETE` | `/api/v1/documents` | Dual-plane purge: clears both vector chunks and relational metadata for the workspace. |
+| `DELETE` | `/api/v1/documents/{id}` | Deletes a specific document record and all its associated vector chunks. |
+| `POST` | `/api/v1/query` | Executes semantic retrieval and returns grounded answer with structured citations. |
+
+### Auth & User Management (Control Plane)
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/v1/auth/register` | Registers new user account (auto-bootstraps first user as active admin). |
+| `POST` | `/api/v1/auth/login` | Authenticates credentials and returns JWT bearer token. |
+| `GET` | `/api/v1/auth/me` | Returns current authenticated user profile and admin status. |
+| `GET` | `/api/v1/auth/users` | Admin-only endpoint listing all system users. |
+| `PATCH` | `/api/v1/auth/users/{id}/status` | Admin-only endpoint to activate or deactivate user accounts. |
+
+### Workspaces & Multi-Tenancy
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/workspaces/` | Lists all workspaces owned by the authenticated user with nested document counts. |
+| `POST` | `/api/v1/workspaces/` | Creates a new named workspace session for isolated document management. |
+| `GET` | `/api/v1/workspaces/{id}` | Retrieves workspace details, ownership verification, and document records. |
+| `DELETE` | `/api/v1/workspaces/{id}` | Dual-plane cascade deletion: purges ChromaDB vector collection and database records. |
 
 ---
 
