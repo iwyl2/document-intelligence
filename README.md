@@ -16,6 +16,7 @@
 ## Overview
 
 Most traditional RAG implementations fail in real-world production environments because they suffer from four fundamental flaws:
+
 1. **Hallucination Under Uncertainty**: Speculating answers when documents lack the necessary facts.
 2. **Loss of Provenance**: Summarizing context without verifiable file and page citations.
 3. **Arbitrary Chunk Boundaries**: Slicing documents into fixed character counts, splitting coherent concepts mid-sentence.
@@ -35,7 +36,7 @@ Most traditional RAG implementations fail in real-world production environments 
 
 ## System Architecture
 
-```
+```text
 [ Academic / Technical PDFs ]
              │
              ▼
@@ -61,35 +62,49 @@ Most traditional RAG implementations fail in real-world production environments 
 ```
 
 ### 1. Ingestion (`backend/src/document_intelligence/ingestion/`)
+
 Extracts text page-by-page from digital PDFs while strictly enforcing 1-based indexing (`DocumentPage.page_number >= 1`) across all downstream representations.
 
 ### 2. Normalization (`backend/src/document_intelligence/processing/text.py`)
+
 Cleans text through Unicode NFKC normalization, converts `\r\n` to `\n`, condenses multi-space sequences, and preserves semantic paragraph divisions (`\n\n`).
 
 ### 3. Semantic Chunking (`backend/src/document_intelligence/processing/semantic_chunker.py`)
+
 Instead of fixed token lengths, adjacent sentence vectors are compared via cosine similarity:
-$$\text{Sim}(u, v) = \frac{u \cdot v}{\|u\|_2 \|v\|_2}$$
+
+$$
+\text{Sim}(u, v) = \frac{u \cdot v}{\|u\|_2 \|v\|_2}
+$$
+
 Chunk boundaries are created whenever similarity drops ($\text{Sim}_i - \text{Sim}_{i+1}$) exceed the 80th percentile, keeping related topical statements intact.
 
 ### 4. Pluggable Embeddings (`backend/src/document_intelligence/processing/embedder.py`)
+
 Decoupled behind an abstract `BaseEmbedder` interface:
+
 - **`LocalEmbedder`**: 384-dimensional dense vectors via PyTorch `all-MiniLM-L6-v2` locally on CPU.
 - **`CloudEmbedder`**: Generates 384-dimensional embeddings via Google Gemini REST API (<60MB RAM footprint). Auto-selected when `GEMINI_API_KEY` is present.
 
 ### 5. Vector Storage & Isolation (`backend/src/document_intelligence/storage/vector_storage.py`)
+
 Manages session-partitioned collections in ChromaDB. Each workspace gets its own deterministic collection (`session_{workspace_id}`). Supports single-document chunk deletion by metadata filter (`where={"file_name": file_name}`).
 
 ### 6. Grounded Generation (`backend/src/document_intelligence/generation/generator.py`)
+
 Formats retrieved context into XML structure:
+
 ```xml
 <context>
   <chunk file="syllabus.pdf" page="1">...</chunk>
   <chunk file="regulations.pdf" page="4">...</chunk>
 </context>
 ```
+
 Extracts cited sources via regex (`r"\[([^•\]]+?)\s*•\s*[Pp]age\s*(\d+)\]"`), automatically deduplicates and sorts citations, and verifies grounding before returning.
 
 ### 7. Relational Control Plane (`backend/src/document_intelligence/db/`, `auth/`)
+
 SQLAlchemy 2.0 models manage `User`, `WorkspaceSession`, and `DocumentRecord`. Auto-bootstraps the initial user as an active administrator; subsequent registrations require admin activation.
 
 ---
@@ -148,6 +163,7 @@ document-intelligence/
 ## Getting Started
 
 ### Prerequisites
+
 - **Python 3.13+**
 - **[uv](https://docs.astral.sh/uv/)** (modern, deterministic Python package manager)
 - **Node.js 20+** and **npm**
@@ -220,7 +236,7 @@ document-intelligence/
 
 ### 3. CLI Direct Pipeline Execution
 
-Run the complete extraction $\rightarrow$ chunking $\rightarrow$ embedding $\rightarrow$ query pipeline directly via CLI:
+Run the complete extraction → chunking → embedding → query pipeline directly via CLI:
 
 ```bash
 uv run --directory backend document-intelligence
@@ -231,7 +247,9 @@ uv run --directory backend document-intelligence
 ## Production Cloud Deployment
 
 ### Backend (FastAPI Cloud)
+
 The backend is optimized for zero-config serverless deployment on **[FastAPI Cloud](https://fastapicloud.com)**:
+
 ```bash
 # 1. Login to FastAPI Cloud
 uv run --directory backend fastapi login
@@ -239,10 +257,13 @@ uv run --directory backend fastapi login
 # 2. Deploy
 uv run --directory backend fastapi deploy
 ```
+
 Set `EMBEDDER_BACKEND=cloud`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`, and a managed serverless Postgres URL (`DATABASE_URL`, e.g., from [Neon.tech](https://neon.tech)) in your FastAPI Cloud environment dashboard.
 
 ### Frontend (Vercel)
+
 Deploy the Next.js frontend to **[Vercel](https://vercel.com)**:
+
 - Set environment variable: `NEXT_PUBLIC_API_URL=https://your-app.fastapicloud.dev` (Type: **Config**)
 - Push to `main` branch to trigger automated Turbopack builds.
 
@@ -251,6 +272,7 @@ Deploy the Next.js frontend to **[Vercel](https://vercel.com)**:
 ## API Reference
 
 ### Health & Core Ingestion
+
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `GET` | `/health` | Health check endpoint returning API availability status. |
@@ -261,6 +283,7 @@ Deploy the Next.js frontend to **[Vercel](https://vercel.com)**:
 | `POST` | `/api/v1/query` | Executes semantic retrieval and returns grounded answer with structured citations. |
 
 ### Auth & User Management (Control Plane)
+
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `POST` | `/api/v1/auth/register` | Registers new user account (auto-bootstraps first user as active admin). |
@@ -270,6 +293,7 @@ Deploy the Next.js frontend to **[Vercel](https://vercel.com)**:
 | `PATCH` | `/api/v1/auth/users/{id}/status` | Admin-only endpoint to activate or deactivate user accounts. |
 
 ### Workspaces & Multi-Tenancy
+
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `GET` | `/api/v1/workspaces/` | Lists all workspaces owned by the authenticated user with nested document counts. |
